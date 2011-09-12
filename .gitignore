@@ -1,0 +1,12 @@
+# dev directories
+.idea
+target
+out
+
+# exclude these files
+*.class
+*.tmp
+*.iml
+
+# project files
+
