@@ -8,7 +8,7 @@
     <description>A Java book parser using Mendeley API.</description>
 
     <modules>
-        <module>mendeley-java-sdk-1.0.25/core</module>
+        <!--<module>mendeley-java-sdk-1.0.25/core</module>-->
         <module>book-parser</module>
     </modules>
     <build>
