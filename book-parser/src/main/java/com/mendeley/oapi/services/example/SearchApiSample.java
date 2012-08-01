@@ -27,11 +27,16 @@ import com.mendeley.oapi.services.SearchService;
  */
 public class SearchApiSample {
 
-	/** The Constant CONSUMER_KEY. */
-	private static final String CONSUMER_KEY = "";
-	
-	/** The Constant CONSUMER_SECRET. */
-	private static final String CONSUMER_SECRET = "";
+    /**
+     * The Constant CONSUMER_KEY.
+     */
+    private static final String CONSUMER_KEY = "1cceab9c2ce6c3cb4afe91949f9ff81105009b286";
+
+    /**
+     * The Constant CONSUMER_SECRET.
+     */
+    private static final String CONSUMER_SECRET = "3da2c8fc77a832f0ab86448c52a28f36";
+
 
     /**
      * The main method.
