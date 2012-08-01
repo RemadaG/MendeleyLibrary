@@ -1,9 +1,16 @@
 package pl.remadag.mendeley.bookparser.runme;
 
+import com.mendeley.oapi.common.PagedList;
+import com.mendeley.oapi.schema.Author;
+import com.mendeley.oapi.schema.Paper;
+import com.mendeley.oapi.schema.Publication;
+import com.mendeley.oapi.schema.User;
 import com.mendeley.oapi.services.MendeleyServiceFactory;
+import com.mendeley.oapi.services.PublicStatsService;
 import com.mendeley.oapi.services.SearchService;
 import com.mendeley.oapi.schema.Document;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class RunMe {
@@ -25,11 +32,46 @@ public class RunMe {
      */
     public static void main(String[] args) {
         MendeleyServiceFactory factory = MendeleyServiceFactory.newInstance(CONSUMER_KEY, CONSUMER_SECRET);
-        SearchService service = factory.createSearchService();
-        List<Document> documents = service.search("hadoop");
+        searchService(factory, "cybernetic");
+    }
+
+    private static void searchService(MendeleyServiceFactory factory, String... searchedTerms) {
+        SearchService searchService = factory.createSearchService();
+        List<Document> documents = searchService.search(searchedTerms);
+        System.out.println("!START! Dla szukanego/szukanych terminów: " + Arrays.toString(searchedTerms) + " mam wszystkich dokumentów=" + documents.size());
         for (Document document : documents) {
-            printResult(document);
+            if (document.getTitle() != null) {
+                System.out.println("document (" + document.getUuid() + ") = " + document.getTitle());
+            }
+            if (document.getAuthors() != null && document.getAuthors().size() > 0) {
+                for (Author author : document.getAuthors()) {
+                    if (author.getSurname() != null) {
+                        System.out.println("   > author = " + author.getForename() + " " + author.getSurname());
+
+                        PagedList<Document> authorDocs = searchService.getDocumentsByAuthor(constructUrlValidString(author));
+                        for (Document doc : authorDocs) {
+                            System.out.print("      > doc rel to autor = ");
+                            printResult(doc);
+                        }
+                    }
+                }
+            }
+            if (document.getUuid() != null && document.getTitle() != null) {
+                PagedList<Document> related = searchService.getRelatedDocuments(document.getUuid());
+                for (Document doc : related) {
+                    System.out.println("   > powiązane z " + document.getTitle() + " sa nastepujace pozycje:");
+                    printResult(doc);
+                }
+            }
+
+
         }
+    }
+
+    private static String constructUrlValidString(Author author) {
+        String str =  author.getForename() + " " + author.getSurname();
+        str = str.replaceAll(" ", "%20");
+        return str;
     }
 
     /**
@@ -38,7 +80,14 @@ public class RunMe {
      * @param document the document
      */
     private static void printResult(Document document) {
-        System.out.println(document);
+        StringBuilder builder = new StringBuilder();
+        if (document.getTitle() != null) {
+            builder.append(document.getTitle());
+            if (document.getPublicationOutlet() != null) {
+                builder.append(" pochodzacy z czasopisma: ").append(document.getPublicationOutlet());
+            }
+            System.out.println(builder.toString());
+        }
     }
 
 }
