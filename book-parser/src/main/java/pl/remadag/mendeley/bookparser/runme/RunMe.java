@@ -2,13 +2,9 @@ package pl.remadag.mendeley.bookparser.runme;
 
 import com.mendeley.oapi.common.PagedList;
 import com.mendeley.oapi.schema.Author;
-import com.mendeley.oapi.schema.Paper;
-import com.mendeley.oapi.schema.Publication;
-import com.mendeley.oapi.schema.User;
-import com.mendeley.oapi.services.MendeleyServiceFactory;
-import com.mendeley.oapi.services.PublicStatsService;
-import com.mendeley.oapi.services.SearchService;
 import com.mendeley.oapi.schema.Document;
+import com.mendeley.oapi.services.MendeleyServiceFactory;
+import com.mendeley.oapi.services.SearchService;
 
 import java.util.Arrays;
 import java.util.List;
