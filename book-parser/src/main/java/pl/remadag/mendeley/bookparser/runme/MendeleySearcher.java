@@ -103,31 +103,27 @@ public class MendeleySearcher {
     }
 
     private void addDocumentToMap(Document document) {
-        if (documentMap.containsKey(document.getUuid())) {
-            DocumentCounter existedDocCounter = documentMap.remove(document.getUuid());
+        if (documentMap.containsKey(SearcherUtil.getDocumentsMapKey(document))) {
+            DocumentCounter existedDocCounter = documentMap.remove(SearcherUtil.getDocumentsMapKey(document));
             int counter = existedDocCounter.getCounter();
-            documentMap.put(document.getUuid(), new DocumentCounter(document, counter + 1));
+            documentMap.put(SearcherUtil.getDocumentsMapKey(document), new DocumentCounter(document, counter + 1));
         } else {
             DocumentCounter documentCounter = new DocumentCounter(document, 1);
-            documentMap.put(document.getUuid(), documentCounter);
+            documentMap.put(SearcherUtil.getDocumentsMapKey(document), documentCounter);
         }
     }
 
     private void addAuthorToMap(Author author, Document document) {
-        if (authorMap.containsKey(getAuthorsMapKey(author))) {
-            AuthorCounter existedAuthor = authorMap.remove(getAuthorsMapKey(author));
+        if (authorMap.containsKey(SearcherUtil.getAuthorsMapKey(author))) {
+            AuthorCounter existedAuthor = authorMap.remove(SearcherUtil.getAuthorsMapKey(author));
             existedAuthor.setCounter(existedAuthor.getCounter() + 1);
             existedAuthor.addDocToAuthor(document);
-            authorMap.put(getAuthorsMapKey(author), existedAuthor);
+            authorMap.put(SearcherUtil.getAuthorsMapKey(author), existedAuthor);
         } else {
             AuthorCounter authorCounter = new AuthorCounter(author, 1);
             authorCounter.addDocToAuthor(document);
-            authorMap.put(getAuthorsMapKey(author), authorCounter);
+            authorMap.put(SearcherUtil.getAuthorsMapKey(author), authorCounter);
         }
-    }
-
-    private String getAuthorsMapKey(Author author) {
-        return author.getSurname() + " " + author.getForename();
     }
 
 
@@ -156,8 +152,8 @@ public class MendeleySearcher {
             Author auth = authorCounter.getAuthor();
             System.out.println(auth.getSurname() + " " + auth.getForename());
             System.out.println("\t powiazane ksiażki z danym autorem: ");
-            for (Document doc : authorCounter.getAuthorsDoc()) {
-                System.out.println("\t\t " + doc.getTitle());
+            for (String docKey : authorCounter.getAuthorsDoc().keySet()) {
+                System.out.println("\t\t " + authorCounter.getAuthorsDoc().get(docKey).getTitle());
             }
         }
 
