@@ -21,8 +21,8 @@ public class MendeleySearcher {
     private int rateCounter = 0;
 
     private static final int STOP_LIMIT = 5;
-    private static final int RATE_LIMIT = 10;
-    private static final long MILLIS = 2000L;
+    private static final int RATE_LIMIT = 100;
+    private static final long MILLIS = 1000L;
 
     public void searchService(MendeleyServiceFactory factory, String... searchedTerms) {
         try {
@@ -79,7 +79,7 @@ public class MendeleySearcher {
                                     System.out.println("EXCEPTION: " + e.getMessage());
                                 }
                             }
-                            System.out.println("   dodaje nowych " + authorDocs.size() + " dokumentow");
+//                            System.out.println("   dodaje nowych " + authorDocs.size() + " dokumentow");
                             for (Document doc : authorDocs) {
                                 documentToSearch.add(doc);
                             }
@@ -147,7 +147,7 @@ public class MendeleySearcher {
             DocumentCounter documentCounter = documentMap.get(key);
             Document doc = documentCounter.getDocument();
             System.out.println(doc.getTitle() + " | " + getAuthors(doc.getAuthors()));
-            System.out.println("\t o czestotliwosci" + documentCounter.getCounter());
+            System.out.println("\t o czestotliwosci " + documentCounter.getCounter());
         }
 
         System.out.println("\n\n\n Dla szukanego hasła znaleziono takich autorow i powiazane ksiażki:");
@@ -155,7 +155,6 @@ public class MendeleySearcher {
             AuthorCounter authorCounter = authorMap.get(key);
             Author auth = authorCounter.getAuthor();
             System.out.println(auth.getSurname() + " " + auth.getForename());
-            System.out.println("\t o czestotliwosci " + authorCounter.getCounter());
             System.out.println("\t powiazane ksiażki z danym autorem: ");
             for (Document doc : authorCounter.getAuthorsDoc()) {
                 System.out.println("\t\t " + doc.getTitle());
