@@ -96,7 +96,7 @@ public class MendeleySearcher {
     }
 
     private void printSearcherResult() {
-        System.out.println("\n\nSTATYSTYKI\n\n");
+        System.out.println("\n\nSTATYSTYKI");
         System.out.println(" Liczba wszystkich ksiazek: " + documentMap.size());
         System.out.println(" Liczba wszystkich autorow: " + authorMap.size());
 
@@ -141,5 +141,34 @@ public class MendeleySearcher {
         System.out.println("\n\nKONIEC\n\n");
         System.out.println(" Liczba wszystkich ksiazek: " + documentMap.size());
         System.out.println(" Liczba wszystkich autorow: " + authorMap.size());
+
+        System.out.println("\n\n\n Dla szukanego hasła znaleziono takie książki:");
+        for (String key : documentMap.keySet()) {
+            DocumentCounter documentCounter = documentMap.get(key);
+            Document doc = documentCounter.getDocument();
+            System.out.println(doc.getTitle() + " | " + getAuthors(doc.getAuthors()));
+            System.out.println("\t o czestotliwosci" + documentCounter.getCounter());
+        }
+
+        System.out.println("\n\n\n Dla szukanego hasła znaleziono takich autorow i powiazane ksiażki:");
+        for (String key : authorMap.keySet()) {
+            AuthorCounter authorCounter = authorMap.get(key);
+            Author auth = authorCounter.getAuthor();
+            System.out.println(auth.getSurname() + " " + auth.getForename());
+            System.out.println("\t o czestotliwosci " + authorCounter.getCounter());
+            System.out.println("\t powiazane ksiażki z danym autorem: ");
+            for (Document doc : authorCounter.getAuthorsDoc()) {
+                System.out.println("\t\t " + doc.getTitle());
+            }
+        }
+
+    }
+
+    private String getAuthors(final List<Author> authors) {
+        StringBuilder builder = new StringBuilder();
+        for (Author author : authors) {
+            builder.append("Autor: ").append(author.getSurname()).append(" ").append(author.getForename()).append(", ");
+        }
+        return builder.toString();
     }
 }
