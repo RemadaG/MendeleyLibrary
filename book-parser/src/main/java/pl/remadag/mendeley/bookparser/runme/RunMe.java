@@ -2,6 +2,9 @@ package pl.remadag.mendeley.bookparser.runme;
 
 import com.mendeley.oapi.services.MendeleyServiceFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RunMe {
 
     /**
@@ -22,7 +25,9 @@ public class RunMe {
     public static void main(String[] args) {
         MendeleyServiceFactory factory = MendeleyServiceFactory.newInstance(CONSUMER_KEY, CONSUMER_SECRET);
         MendeleySearcher searcher = new MendeleySearcher();
-        searcher.searchService(factory, "hadoop");
+        List<String> keys = new ArrayList<String>();
+        keys.add("hadoop AND hbase");
+        searcher.searchForKeys(keys, factory);
     }
 
 

@@ -1,6 +1,5 @@
 package pl.remadag.mendeley.bookparser.runme;
 
-import com.mendeley.oapi.common.PagedArrayList;
 import com.mendeley.oapi.common.PagedList;
 import com.mendeley.oapi.schema.Author;
 import com.mendeley.oapi.schema.Document;
@@ -8,124 +7,130 @@ import com.mendeley.oapi.services.MendeleyException;
 import com.mendeley.oapi.services.MendeleyServiceFactory;
 import com.mendeley.oapi.services.SearchService;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MendeleySearcher {
 
     private Map<String, DocumentCounter> documentMap = new HashMap<String, DocumentCounter>();
-    private Map<String, AuthorCounter> authorMap = new HashMap<String, AuthorCounter>();
 
-    private Set<Document> documentToSearch = new HashSet<Document>();
+    private int documentSearchCounter = 0;
 
-    private int loopCounter = 1;
-    private int rateCounter = 0;
-
-    private static final int STOP_LIMIT = 5;
-    private static final int RATE_LIMIT = 100;
+    private static final int DOCUMENT_SEARCH_LIMIT = Integer.MAX_VALUE;
     private static final long MILLIS = 1000L;
 
-    public void searchService(MendeleyServiceFactory factory, String... searchedTerms) {
-        try {
+    public void searchService(MendeleyServiceFactory factory, String searchedTerms) {
+        Map<String, List<String>> mapWithKeys = new HashMap<String, List<String>>();
+        List<String> addList = new ArrayList<String>();
+        addList.add("hadoop");
+        addList.add("hbase");
+        mapWithKeys.put("ADD", addList);
+        List<String> removeList = new ArrayList<String>();
+        removeList.add("sql");
+        mapWithKeys.put("REMOVE", removeList);
+        sleepMe();
+        SearchService searchService = factory.createSearchService();
+        List<Document> documents = new ArrayList<Document>();
+        documentSearchCounter++;
+        for (String addTerm : mapWithKeys.get("ADD")) {
+            if (documentSearchCounter <= DOCUMENT_SEARCH_LIMIT) {
+                System.out.println("Wyszukiwanie ksiazek dla hasla " + addTerm);
+                try {
+                    documents = searchService.search(addTerm);
+                } catch (MendeleyException e) {
+                    System.out.println("EXCEPTION: " + e.getMessage());
+                }
+                processReceivedDocsFromServiceToAdd(documents, searchService);
+                printSearcherResult("ADD", addTerm);
+            }
+        }
 
+        for (String removeTerm : mapWithKeys.get("REMOVE")) {
+            if (documentSearchCounter <= DOCUMENT_SEARCH_LIMIT) {
+                try {
+                    documents = searchService.search(removeTerm);
+                } catch (MendeleyException e) {
+                    System.out.println("EXCEPTION: " + e.getMessage());
+                }
+                processReceivedDocsFromServiceToRemove(documents, searchService);
+                printSearcherResult("REMOVE", removeTerm);
+            }
+        }
+
+    }
+
+    private void processReceivedDocsFromServiceToRemove(List<Document> documents, SearchService searchService) {
+        for (Document document : documents) {
+            if (document.getAuthors() != null && document.getAuthors().size() > 0 && document.getTitle() != null && document.getUuid() != null) {
+                removeDocumentFromMap(document);
+                sleepMe();
+                PagedList<Document> relatedDocs = searchService.getRelatedDocuments(document.getUuid());
+                for (Document relDoc : relatedDocs) {
+                    if (relDoc.getAuthors() != null && relDoc.getAuthors().size() > 0 && relDoc.getTitle() != null) {
+                        removeDocumentFromMap(relDoc);
+                    }
+                }
+                System.out.println("Koniec dodawania dokumentow dla " + document.getTitle());
+            }
+        }
+
+    }
+
+    private void processReceivedDocsFromServiceToAdd(List<Document> documents, SearchService searchService) {
+        System.out.println("Z uslugi otrzymalem " + documents.size() + " dokumentow");
+        for (Document document : documents) {
+            if (document.getAuthors() != null && document.getAuthors().size() > 0 && document.getTitle() != null && document.getUuid() != null) {
+                addDocumentToMap(document);
+                sleepMe();
+                PagedList<Document> relatedDocs = searchService.getRelatedDocuments(document.getUuid());
+                for (Document relDoc : relatedDocs) {
+                    if (relDoc.getAuthors() != null && relDoc.getAuthors().size() > 0 && relDoc.getTitle() != null) {
+                        addDocumentToMap(relDoc);
+                    }
+                }
+                System.out.println("Koniec dodawania dokumentow dla " + document.getTitle());
+            }
+        }
+    }
+
+    private void sleepMe() {
+        try {
             Thread.sleep(MILLIS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        SearchService searchService = factory.createSearchService();
-        List<Document> documents = new ArrayList<Document>();
-        rateCounter++;
-        if (rateCounter <= RATE_LIMIT) {
-            try {
-                documents = searchService.search(searchedTerms);
-            } catch (MendeleyException e) {
-                System.out.println("EXCEPTION: " + e.getMessage());
-            }
-        }
-        System.out.println("!START! Dla szukanego/szukanych terminów: " + Arrays.toString(searchedTerms)
-                + " mam wszystkich dokumentów " + documents.size() + " sztuk.");
-        documentToSearch.addAll(documents);
-        recurrentSearch(searchService);
-        printLastResults();
     }
 
-
-    private void recurrentSearch(SearchService searchService) {
-        if (loopCounter <= STOP_LIMIT) {
-            List<Document> documentsList = new ArrayList<Document>(documentToSearch);
-            try {
-                Thread.sleep(MILLIS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            System.out.println("Obecnie mam: " + documentsList.size() + " sztuk.");
-            documentToSearch = new HashSet<Document>();
-            for (Document document : documentsList) {
-                if (document.getAuthors() != null && document.getAuthors().size() > 0 && document.getTitle() != null) {
-                    addDocumentToMap(document);
-                    for (Author author : document.getAuthors()) {
-                        if (author.getSurname() != null) {
-                            addAuthorToMap(author, document);
-                            try {
-                                Thread.sleep(MILLIS);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            PagedList<Document> authorDocs = new PagedArrayList<Document>();
-                            rateCounter++;
-                            if (rateCounter <= RATE_LIMIT) {
-                                try {
-                                    authorDocs = searchService.getDocumentsByAuthor(constructUrlValidString(author));
-                                } catch (MendeleyException e) {
-                                    System.out.println("EXCEPTION: " + e.getMessage());
-                                }
-                            }
-//                            System.out.println("   dodaje nowych " + authorDocs.size() + " dokumentow");
-                            for (Document doc : authorDocs) {
-                                documentToSearch.add(doc);
-                            }
-                        }
-                    }
-                    System.out.println("Koniec rekurencji " + loopCounter);
-                    loopCounter = loopCounter + 1;
-                    recurrentSearch(searchService);
-                }
-            }
-        } else {
-            printSearcherResult();
-        }
-    }
-
-    private void printSearcherResult() {
-        System.out.println("\n\nSTATYSTYKI");
-        System.out.println(" Liczba wszystkich ksiazek: " + documentMap.size());
-        System.out.println(" Liczba wszystkich autorow: " + authorMap.size());
+    private void printSearcherResult(String flag, String term) {
+        System.out.println(" Liczba wszystkich ksiazek przy fladze " + flag + " dla slowa " + term + " wynosi " + documentMap.size());
 
     }
 
     private void addDocumentToMap(Document document) {
         if (documentMap.containsKey(SearcherUtil.getDocumentsMapKey(document))) {
+//            System.out.println("Zmienam index dla dokumentu " + document.getTitle());
             DocumentCounter existedDocCounter = documentMap.remove(SearcherUtil.getDocumentsMapKey(document));
             int counter = existedDocCounter.getCounter();
             documentMap.put(SearcherUtil.getDocumentsMapKey(document), new DocumentCounter(document, counter + 1));
         } else {
+//            System.out.println("Dodaje nowy dokuement dla " + document.getTitle());
             DocumentCounter documentCounter = new DocumentCounter(document, 1);
             documentMap.put(SearcherUtil.getDocumentsMapKey(document), documentCounter);
         }
     }
 
-    private void addAuthorToMap(Author author, Document document) {
-        if (authorMap.containsKey(SearcherUtil.getAuthorsMapKey(author))) {
-            AuthorCounter existedAuthor = authorMap.remove(SearcherUtil.getAuthorsMapKey(author));
-            existedAuthor.setCounter(existedAuthor.getCounter() + 1);
-            existedAuthor.addDocToAuthor(document);
-            authorMap.put(SearcherUtil.getAuthorsMapKey(author), existedAuthor);
-        } else {
-            AuthorCounter authorCounter = new AuthorCounter(author, 1);
-            authorCounter.addDocToAuthor(document);
-            authorMap.put(SearcherUtil.getAuthorsMapKey(author), authorCounter);
+    private void removeDocumentFromMap(Document document) {
+        for (String docMapKey : documentMap.keySet()) {
+            String searchedDocKey = SearcherUtil.getDocumentsMapKey(document);
+            if (docMapKey.equals(searchedDocKey)) {
+                documentMap.remove(docMapKey);
+                System.out.println("Usuwam z mapy taki dokument jak: " + searchedDocKey);
+                break;
+            }
         }
     }
-
 
     private static String constructUrlValidString(Author author) {
         String str = author.getForename() + " " + author.getSurname();
@@ -136,7 +141,6 @@ public class MendeleySearcher {
     private void printLastResults() {
         System.out.println("\n\nKONIEC\n\n");
         System.out.println(" Liczba wszystkich ksiazek: " + documentMap.size());
-        System.out.println(" Liczba wszystkich autorow: " + authorMap.size());
 
         System.out.println("\n\n\n Dla szukanego hasła znaleziono takie książki:");
         for (String key : documentMap.keySet()) {
@@ -145,18 +149,6 @@ public class MendeleySearcher {
             System.out.println(doc.getTitle() + " | " + getAuthors(doc.getAuthors()));
             System.out.println("\t o czestotliwosci " + documentCounter.getCounter());
         }
-
-        System.out.println("\n\n\n Dla szukanego hasła znaleziono takich autorow i powiazane ksiażki:");
-        for (String key : authorMap.keySet()) {
-            AuthorCounter authorCounter = authorMap.get(key);
-            Author auth = authorCounter.getAuthor();
-            System.out.println(auth.getSurname() + " " + auth.getForename());
-            System.out.println("\t powiazane ksiażki z danym autorem: ");
-            for (String docKey : authorCounter.getAuthorsDoc().keySet()) {
-                System.out.println("\t\t " + authorCounter.getAuthorsDoc().get(docKey).getTitle());
-            }
-        }
-
     }
 
     private String getAuthors(final List<Author> authors) {
@@ -165,5 +157,14 @@ public class MendeleySearcher {
             builder.append("Autor: ").append(author.getSurname()).append(" ").append(author.getForename()).append(", ");
         }
         return builder.toString();
+    }
+
+    public void searchForKeys(List<String> keys, MendeleyServiceFactory factory) {
+        for (String key : keys) {
+            System.out.println("\n\nZaczynam przetwarzanie dla slow: " + key);
+            searchService(factory, key);
+            System.out.println("Zakonczylem przetwarzanie dla slow: " + key);
+            printLastResults();
+        }
     }
 }
