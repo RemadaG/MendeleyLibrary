@@ -21,15 +21,8 @@ public class MendeleySearcher {
     private static final int DOCUMENT_SEARCH_LIMIT = Integer.MAX_VALUE;
     private static final long MILLIS = 1000L;
 
-    public void searchService(MendeleyServiceFactory factory, String searchedTerms) {
-        Map<String, List<String>> mapWithKeys = new HashMap<String, List<String>>();
-        List<String> addList = new ArrayList<String>();
-        addList.add("hadoop");
-        addList.add("hbase");
-        mapWithKeys.put("ADD", addList);
-        List<String> removeList = new ArrayList<String>();
-        removeList.add("sql");
-        mapWithKeys.put("REMOVE", removeList);
+    public void searchService(MendeleyServiceFactory factory, String inputSentence) {
+        Map<String, List<String>> mapWithKeys = SearcherUtil.parseInputSentence(inputSentence);
         sleepMe();
         SearchService searchService = factory.createSearchService();
         List<Document> documents = new ArrayList<Document>();

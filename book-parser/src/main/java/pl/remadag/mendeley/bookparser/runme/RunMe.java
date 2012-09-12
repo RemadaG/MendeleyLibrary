@@ -26,7 +26,7 @@ public class RunMe {
         MendeleyServiceFactory factory = MendeleyServiceFactory.newInstance(CONSUMER_KEY, CONSUMER_SECRET);
         MendeleySearcher searcher = new MendeleySearcher();
         List<String> keys = new ArrayList<String>();
-        keys.add("hadoop AND hbase");
+        keys.add("hadoop AND hbase NOT sql");
         searcher.searchForKeys(keys, factory);
     }
 
