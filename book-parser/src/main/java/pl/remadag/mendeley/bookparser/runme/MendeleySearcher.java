@@ -105,17 +105,14 @@ public class MendeleySearcher {
 
     private void printSearcherResult(String flag, String term) {
         System.out.println(" Liczba wszystkich ksiazek przy fladze " + flag + " dla slowa " + term + " wynosi " + documentMap.size());
-
     }
 
     private void addDocumentToMap(Document document) {
         if (documentMap.containsKey(SearcherUtil.getDocumentsMapKey(document))) {
-//            System.out.println("Zmienam index dla dokumentu " + document.getTitle());
             DocumentCounter existedDocCounter = documentMap.remove(SearcherUtil.getDocumentsMapKey(document));
             int counter = existedDocCounter.getCounter();
             documentMap.put(SearcherUtil.getDocumentsMapKey(document), new DocumentCounter(document, counter + 1));
         } else {
-//            System.out.println("Dodaje nowy dokuement dla " + document.getTitle());
             DocumentCounter documentCounter = new DocumentCounter(document, 1);
             documentMap.put(SearcherUtil.getDocumentsMapKey(document), documentCounter);
         }
@@ -126,7 +123,6 @@ public class MendeleySearcher {
             String searchedDocKey = SearcherUtil.getDocumentsMapKey(document);
             if (docMapKey.equals(searchedDocKey)) {
                 documentMap.remove(docMapKey);
-                System.out.println("Usuwam z mapy taki dokument jak: " + searchedDocKey);
                 break;
             }
         }
