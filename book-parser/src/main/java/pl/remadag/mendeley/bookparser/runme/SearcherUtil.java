@@ -1,5 +1,6 @@
 package pl.remadag.mendeley.bookparser.runme;
 
+import com.mendeley.oapi.schema.Author;
 import com.mendeley.oapi.schema.Document;
 
 import java.util.ArrayList;
@@ -39,6 +40,12 @@ public class SearcherUtil {
         outputMap.put("ADD", addList);
         outputMap.put("REMOVE", removeList);
         return outputMap;
+    }
+
+    public static String constructAuthorUrlValidString(Author author) {
+        String str = author.getForename() + " " + author.getSurname();
+        str = str.replaceAll(" ", "%20");
+        return str;
     }
 
 }
