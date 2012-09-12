@@ -8,10 +8,16 @@ import com.mendeley.oapi.services.MendeleyException;
 import com.mendeley.oapi.services.MendeleyServiceFactory;
 import com.mendeley.oapi.services.SearchService;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MendeleySearcher {
 
@@ -165,17 +171,62 @@ public class MendeleySearcher {
     }
 
 
-    private void printLastResults() {
+    private void printLastResults() throws IOException {
         System.out.println("\n\nKONIEC\n\n");
-        for (String key : generalMap.keySet()) {
-            Map<String, DocumentCounter> map = generalMap.get(key);
-            System.out.println("Dla hasła: " + key + " mam " + map.size() + " książek.");
-            for (String documentCounterKey : map.keySet()) {
-                DocumentCounter documentCounter = map.get(documentCounterKey);
+        for (String term : generalMap.keySet()) {
+            Map<String, DocumentCounter> documentCounterMap = generalMap.get(term);
+            Map<String, Set<Document>> sortedDocMap = new HashMap<String, Set<Document>>();
+//            System.out.println("Dla hasła: " + term + " mam " + documentCounterMap.size() + " książek.");
+            for (String documentTitle : documentCounterMap.keySet()) {
+                DocumentCounter documentCounter = documentCounterMap.get(documentTitle);
                 Document doc = documentCounter.getDocument();
-                System.out.println(doc.getTitle() + " | " + getAuthors(doc.getAuthors()));
-                System.out.println("\t o czestotliwosci " + documentCounter.getCounter());
+                int counter = documentCounter.getCounter();
+                putDocAndCounterToMap(doc, counter, sortedDocMap);
             }
+
+            for (String counter : sortedDocMap.keySet()) {
+                Set<Document> sortedDoc = sortedDocMap.get(counter);
+                for (Document d : sortedDoc) {
+                    System.out.println(d.getTitle() + " | " + getAuthors(d.getAuthors()));
+                    System.out.println("\t o czestotliwosci " + counter);
+                }
+            }
+
+            for (String counter : sortedDocMap.keySet()) {
+                if (!term.contains("r_")) {
+                    term = "a_" + term;
+                }
+                String fileName = term + "_" + counter + ".txt";
+                File file = new File(fileName);
+                Set<Document> sortedDoc = sortedDocMap.get(counter);
+                boolean exist = file.createNewFile();
+                if (exist) {
+                    FileWriter fstream = new FileWriter(fileName);
+                    BufferedWriter out = new BufferedWriter(fstream);
+                    for (Document d : sortedDoc) {
+                        out.write(d.getTitle() + " | " + getAuthors(d.getAuthors()));
+                        out.newLine();
+                        out.write("\t o czestotliwosci " + counter);
+                        out.newLine();
+                    }
+                    out.close();
+                    System.out.println("File " + fileName + " in location " + file.getAbsolutePath() + " created successfully.");
+                } else {
+                    System.out.println("EXCEPTION File already exists.");
+                }
+            }
+        }
+    }
+
+    private void putDocAndCounterToMap(Document doc, int counter, Map<String, Set<Document>> sortedDocMap) {
+        if (sortedDocMap.containsKey(String.valueOf(counter))) {
+            Set<Document> docSet = sortedDocMap.remove(String.valueOf(counter));
+            docSet.add(doc);
+            sortedDocMap.put(String.valueOf(counter), docSet);
+        } else {
+            Set<Document> docSet = new HashSet<Document>();
+            docSet.add(doc);
+            sortedDocMap.put(String.valueOf(counter), docSet);
         }
     }
 
@@ -192,7 +243,11 @@ public class MendeleySearcher {
             System.out.println("\n\nZaczynam przetwarzanie dla slow: " + key);
             searchService(factory, key);
             System.out.println("Zakonczylem przetwarzanie dla slow: " + key);
-            printLastResults();
+            try {
+                printLastResults();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
