@@ -231,7 +231,7 @@ public class MendeleySearcher {
                     for (Document d : sortedDoc) {
                         out.write(d.getTitle() + " | " + getAuthors(d.getAuthors()));
                         out.newLine();
-                        out.write("\t o czestotliwosci " + counter);
+                        out.write("\to czestotliwosci " + counter);
                         out.newLine();
                     }
                     out.close();
@@ -244,23 +244,24 @@ public class MendeleySearcher {
         String fileName = "relatedDocs.txt";
         final String pathName = "files/" + fileName;
         File relatedDocsFile = new File(pathName);
-        for (String docTitle : relatedDocMap.keySet()) {
-            boolean exist = relatedDocsFile.createNewFile();
-            if (exist) {
-                FileWriter fstream = new FileWriter(pathName);
-                BufferedWriter out = new BufferedWriter(fstream);
+        boolean exist = relatedDocsFile.createNewFile();
+        if (exist) {
+            FileWriter fstream = new FileWriter(pathName);
+            BufferedWriter out = new BufferedWriter(fstream);
+            for (String docTitle : relatedDocMap.keySet()) {
+                out.newLine();
+                out.write(docTitle);
                 for (String relatedDocTitle : relatedDocMap.get(docTitle)) {
-                    out.write(docTitle);
                     out.newLine();
-                    out.write("\t " + relatedDocTitle);
-                    out.newLine();
+                    out.write("\t" + relatedDocTitle);
                 }
                 out.close();
-                System.out.println("File " + fileName + " in location " + relatedDocsFile.getAbsolutePath() + " created successfully.");
-            } else {
-                System.out.println("EXCEPTION File for related docs already exists.");
             }
+            System.out.println("File " + fileName + " in location " + relatedDocsFile.getAbsolutePath() + " created successfully.");
+        } else {
+            System.out.println("EXCEPTION File for related docs already exists.");
         }
+
     }
 
     private void putDocAndCounterToMap(Document doc, int counter, Map<String, Set<Document>> sortedDocMap) {
