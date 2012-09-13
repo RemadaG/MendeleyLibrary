@@ -22,7 +22,7 @@ import java.util.Set;
 public class MendeleySearcher {
 
     private Map<String, Map<String, DocumentCounter>> generalMap = new HashMap<String, Map<String, DocumentCounter>>();
-
+    private Map<String, Set<String>> relatedDocMap = new HashMap<String, Set<String>>();
     private int documentSearchCounter = 0;
 
     private static final int DOCUMENT_SEARCH_LIMIT = Integer.MAX_VALUE;
@@ -78,6 +78,7 @@ public class MendeleySearcher {
                     }
                     for (Document relDoc : relatedDocs) {
                         if (relDoc.getAuthors() != null && relDoc.getAuthors().size() > 0 && relDoc.getTitle() != null) {
+                            addRelatedDocToRelatedDocsMap(document, relDoc);
                             removeDocumentFromMap(relDoc, removeTerm);
                         }
                     }
@@ -105,6 +106,7 @@ public class MendeleySearcher {
                     }
                     for (Document relDoc : relatedDocs) {
                         if (relDoc.getAuthors() != null && relDoc.getAuthors().size() > 0 && relDoc.getTitle() != null) {
+                            addRelatedDocToRelatedDocsMap(document, relDoc);
                             addDocumentToMap(relDoc, addTerm);
                         }
                     }
@@ -131,6 +133,19 @@ public class MendeleySearcher {
                 }
                 System.out.println("ADD > Koniec dodawania dokumentow dla " + document.getTitle());
             }
+        }
+    }
+
+    private void addRelatedDocToRelatedDocsMap(final Document originalDoc, final Document relatedDoc) {
+        final String formattedOrgDocTitle = originalDoc.getTitle().trim().toLowerCase();
+        final String formattedRelDocTitle = relatedDoc.getTitle().trim().toLowerCase();
+        if(relatedDocMap.containsKey(formattedOrgDocTitle)) {
+            Set<String> listForExistingDoc = relatedDocMap.get(formattedOrgDocTitle);
+            listForExistingDoc.add(formattedRelDocTitle);
+        }   else {
+            final Set<String> docSet = new HashSet<String>();
+            docSet.add(formattedRelDocTitle);
+            relatedDocMap.put(formattedOrgDocTitle, docSet);
         }
     }
 
@@ -199,14 +214,6 @@ public class MendeleySearcher {
             }
 
             for (String counter : sortedDocMap.keySet()) {
-                Set<Document> sortedDoc = sortedDocMap.get(counter);
-                for (Document d : sortedDoc) {
-                    System.out.println(d.getTitle() + " | " + getAuthors(d.getAuthors()));
-                    System.out.println("\t o czestotliwosci " + counter);
-                }
-            }
-
-            for (String counter : sortedDocMap.keySet()) {
                 String fileNameTerm;
                 if (!term.contains("r_")) {
                     fileNameTerm = "a_" + term;
@@ -232,6 +239,26 @@ public class MendeleySearcher {
                 } else {
                     System.out.println("EXCEPTION File already exists.");
                 }
+            }
+        }
+        String fileName = "relatedDocs.txt";
+        final String pathName = "files/" + fileName;
+        File relatedDocsFile = new File(pathName);
+        for (String docTitle : relatedDocMap.keySet()) {
+            boolean exist = relatedDocsFile.createNewFile();
+            if (exist) {
+                FileWriter fstream = new FileWriter(pathName);
+                BufferedWriter out = new BufferedWriter(fstream);
+                for (String relatedDocTitle : relatedDocMap.get(docTitle)) {
+                    out.write(docTitle);
+                    out.newLine();
+                    out.write("\t " + relatedDocTitle);
+                    out.newLine();
+                }
+                out.close();
+                System.out.println("File " + fileName + " in location " + relatedDocsFile.getAbsolutePath() + " created successfully.");
+            } else {
+                System.out.println("EXCEPTION File for related docs already exists.");
             }
         }
     }
