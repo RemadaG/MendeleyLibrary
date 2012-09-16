@@ -9,6 +9,7 @@ import com.mendeley.oapi.services.SearchService;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -186,7 +187,7 @@ public class MendeleySearcher {
 
 
     private void printLastResults() throws IOException {
-        System.out.println("\n\nKONIEC\n\n");
+        System.out.println("\n\nKONIEC " + new Date() + "  \n\n");
         FileGeneratorUtil fileGenerator = new FileGeneratorUtil();
         String filesLocationPrefix = FileGeneratorUtil.createFilesLocationPrefix();
         for (String term : generalMap.keySet()) {
