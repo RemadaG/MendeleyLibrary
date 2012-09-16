@@ -2,15 +2,11 @@ package pl.remadag.mendeley.bookparser.runme;
 
 import com.mendeley.oapi.common.PagedArrayList;
 import com.mendeley.oapi.common.PagedList;
-import com.mendeley.oapi.schema.Author;
 import com.mendeley.oapi.schema.Document;
 import com.mendeley.oapi.services.MendeleyException;
 import com.mendeley.oapi.services.MendeleyServiceFactory;
 import com.mendeley.oapi.services.SearchService;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,8 +21,8 @@ public class MendeleySearcher {
     private Map<String, Set<String>> relatedDocMap = new HashMap<String, Set<String>>();
     private int documentSearchCounter = 0;
 
-    private static final int DOCUMENT_SEARCH_LIMIT = Integer.MAX_VALUE;
-    private static final long MILLIS = 1000L;
+    private static final int DOCUMENT_SEARCH_LIMIT = 5;
+    private static final long MILLIS = 500L;
 
     public void searchService(MendeleyServiceFactory factory, String inputSentence) {
         Map<String, List<String>> mapWithKeys = SearcherUtil.parseInputSentence(inputSentence);
@@ -67,6 +63,7 @@ public class MendeleySearcher {
         for (Document document : documents) {
             if (document.getAuthors() != null && document.getAuthors().size() > 0 && document.getTitle() != null && document.getUuid() != null) {
                 removeDocumentFromMap(document, removeTerm);
+/*
                 PagedList<Document> relatedDocs = new PagedArrayList<Document>();
                 if (documentSearchCounter <= DOCUMENT_SEARCH_LIMIT) {
                     try {
@@ -82,11 +79,11 @@ public class MendeleySearcher {
                             removeDocumentFromMap(relDoc, removeTerm);
                         }
                     }
-                }
+
+                }    */
                 System.out.println("REM > Koniec dodawania dokumentow dla " + document.getTitle());
             }
         }
-
     }
 
     private void processReceivedDocsFromServiceToAdd(List<Document> documents, String addTerm, SearchService searchService) {
@@ -113,6 +110,7 @@ public class MendeleySearcher {
                 }
 
                 //for author
+/*
                 for (Author author : document.getAuthors()) {
                     final String authorName = SearcherUtil.constructAuthorUrlValidString(author);
                     PagedList<Document> authorsDocs = new PagedArrayList<Document>();
@@ -131,6 +129,7 @@ public class MendeleySearcher {
                         }
                     }
                 }
+*/
                 System.out.println("ADD > Koniec dodawania dokumentow dla " + document.getTitle());
             }
         }
@@ -139,10 +138,10 @@ public class MendeleySearcher {
     private void addRelatedDocToRelatedDocsMap(final Document originalDoc, final Document relatedDoc) {
         final String formattedOrgDocTitle = originalDoc.getTitle().trim().toLowerCase();
         final String formattedRelDocTitle = relatedDoc.getTitle().trim().toLowerCase();
-        if(relatedDocMap.containsKey(formattedOrgDocTitle)) {
+        if (relatedDocMap.containsKey(formattedOrgDocTitle)) {
             Set<String> listForExistingDoc = relatedDocMap.get(formattedOrgDocTitle);
             listForExistingDoc.add(formattedRelDocTitle);
-        }   else {
+        } else {
             final Set<String> docSet = new HashSet<String>();
             docSet.add(formattedRelDocTitle);
             relatedDocMap.put(formattedOrgDocTitle, docSet);
@@ -161,7 +160,7 @@ public class MendeleySearcher {
     private void printSearcherResult(String flag, String term) {
         final Map<String, DocumentCounter> stringDocumentCounterMap = generalMap.get(term.toLowerCase());
         if (stringDocumentCounterMap != null) {
-            System.out.println(" Liczba wszystkich ksiazek przy fladze " + flag + " dla slowa " + term
+            System.out.println("Liczba wszystkich ksiazek przy fladze " + flag + " dla slowa " + term
                     + " wynosi " + stringDocumentCounterMap.size());
         }
     }
@@ -187,21 +186,13 @@ public class MendeleySearcher {
 
     private void removeDocumentFromMap(Document document, String removeTerm) {
         addDocumentToMap(document, "R_" + removeTerm);
-
-/*
-        for (String docMapKey : documentMap.keySet()) {
-            String searchedDocKey = SearcherUtil.getDocumentsMapKey(document);
-            if (docMapKey.equals(searchedDocKey)) {
-                documentMap.remove(docMapKey);
-                break;
-            }
-        }
-*/
     }
 
 
     private void printLastResults() throws IOException {
         System.out.println("\n\nKONIEC\n\n");
+        FileGeneratorUtil fileGenerator = new FileGeneratorUtil();
+        String filesLocationPrefix = "/imageANDrecognitionANDgrammarNOTneural/";
         for (String term : generalMap.keySet()) {
             Map<String, DocumentCounter> documentCounterMap = generalMap.get(term.toLowerCase());
             Map<String, Set<Document>> sortedDocMap = new HashMap<String, Set<Document>>();
@@ -212,57 +203,13 @@ public class MendeleySearcher {
                 int counter = documentCounter.getCounter();
                 putDocAndCounterToMap(doc, counter, sortedDocMap);
             }
-
-            for (String counter : sortedDocMap.keySet()) {
-                String fileNameTerm;
-                if (!term.contains("r_")) {
-                    fileNameTerm = "a_" + term;
-                } else {
-                    fileNameTerm = term;
-                }
-                String fileName = fileNameTerm + "_" + counter + ".txt";
-                final String pathName = "files/" + fileName;
-                File file = new File(pathName);
-                Set<Document> sortedDoc = sortedDocMap.get(counter);
-                boolean exist = file.createNewFile();
-                if (exist) {
-                    FileWriter fstream = new FileWriter(pathName);
-                    BufferedWriter out = new BufferedWriter(fstream);
-                    for (Document d : sortedDoc) {
-                        out.write(d.getTitle() + " | " + getAuthors(d.getAuthors()));
-                        out.newLine();
-                        out.write("\to czestotliwosci " + counter);
-                        out.newLine();
-                    }
-                    out.close();
-                    System.out.println("File " + fileName + " in location " + file.getAbsolutePath() + " created successfully.");
-                } else {
-                    System.out.println("EXCEPTION File already exists.");
-                }
-            }
-        }
-        String fileName = "relatedDocs.txt";
-        final String pathName = "files/" + fileName;
-        File relatedDocsFile = new File(pathName);
-        boolean exist = relatedDocsFile.createNewFile();
-        if (exist) {
-            FileWriter fstream = new FileWriter(pathName);
-            BufferedWriter out = new BufferedWriter(fstream);
-            for (String docTitle : relatedDocMap.keySet()) {
-                out.newLine();
-                out.write(docTitle);
-                for (String relatedDocTitle : relatedDocMap.get(docTitle)) {
-                    out.newLine();
-                    out.write("\t" + relatedDocTitle);
-                }
-                out.close();
-            }
-            System.out.println("File " + fileName + " in location " + relatedDocsFile.getAbsolutePath() + " created successfully.");
-        } else {
-            System.out.println("EXCEPTION File for related docs already exists.");
+            fileGenerator.createFilesForTherm(term, sortedDocMap, filesLocationPrefix);
         }
 
+        fileGenerator.createRelatedDocsFile(relatedDocMap, filesLocationPrefix);
+        fileGenerator.createDocsWithFitsAllCriteria(generalMap, filesLocationPrefix);
     }
+
 
     private void putDocAndCounterToMap(Document doc, int counter, Map<String, Set<Document>> sortedDocMap) {
         if (sortedDocMap.containsKey(String.valueOf(counter))) {
@@ -276,24 +223,26 @@ public class MendeleySearcher {
         }
     }
 
-    private String getAuthors(final List<Author> authors) {
-        StringBuilder builder = new StringBuilder();
-        for (Author author : authors) {
-            builder.append("Autor: ").append(author.getSurname()).append(" ").append(author.getForename()).append(", ");
-        }
-        return builder.toString();
-    }
-
     public void searchForKeys(List<String> keys, MendeleyServiceFactory factory) {
         for (String key : keys) {
             System.out.println("\n\nZaczynam przetwarzanie dla slow: " + key);
             searchService(factory, key);
             System.out.println("Zakonczylem przetwarzanie dla slow: " + key);
+            generateMapWithAllDocumentsWhichFitsAllCriteria();
+
             try {
                 printLastResults();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("[searchForKeys] EXCEPTION: " + e.getMessage());
             }
+        }
+    }
+
+    private void generateMapWithAllDocumentsWhichFitsAllCriteria() {
+        Set<String> generalMapKeys = generalMap.keySet();
+        System.out.println("[generateMapWithAllDocumentsWhichFitsAllCriteria] START");
+        for (String keys: generalMap.keySet()) {
+
         }
     }
 }
