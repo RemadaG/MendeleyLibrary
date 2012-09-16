@@ -85,7 +85,7 @@ public class FileGeneratorUtil {
 
     public void createDocsWithFitsAllCriteria(Map<String, Integer> fitsCriteriaDocsMap, String filesLocationPrefix) throws IOException {
 
-        if(fitsCriteriaDocsMap.isEmpty()) {
+        if (fitsCriteriaDocsMap.isEmpty()) {
             fitsCriteriaDocsMap.put("Test title", 5);
         }
 
@@ -99,8 +99,8 @@ public class FileGeneratorUtil {
             out.write("Liczba wszystkich ksiazek: " + fitsCriteriaDocsMap.size());
             out.newLine();
 
-            for(String title : fitsCriteriaDocsMap.keySet()) {
-                out.write(title + " | Częstotliwość: "+ fitsCriteriaDocsMap.get(title));
+            for (String title : fitsCriteriaDocsMap.keySet()) {
+                out.write(title + " | Częstotliwość: " + fitsCriteriaDocsMap.get(title));
                 out.newLine();
             }
 

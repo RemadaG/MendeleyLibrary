@@ -18,9 +18,9 @@ public class RunMe {
     private static final String CONSUMER_SECRET = "9276b0554888d0d8a4f9be9270d59f01";
 
 
-    public static final int DOCUMENT_SEARCH_LIMIT = 1;
+    public static final int DOCUMENT_SEARCH_LIMIT = 150;
     public static final long MILLIS = 500L;
-    public static final String DOC_DIR = "aaa";
+    public static final String DOC_DIR = "testDir";
 
 
 
