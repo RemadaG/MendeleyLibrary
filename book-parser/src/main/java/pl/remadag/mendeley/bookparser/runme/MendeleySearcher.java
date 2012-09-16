@@ -2,6 +2,7 @@ package pl.remadag.mendeley.bookparser.runme;
 
 import com.mendeley.oapi.common.PagedArrayList;
 import com.mendeley.oapi.common.PagedList;
+import com.mendeley.oapi.schema.Author;
 import com.mendeley.oapi.schema.Document;
 import com.mendeley.oapi.services.MendeleyException;
 import com.mendeley.oapi.services.MendeleyServiceFactory;
@@ -107,11 +108,10 @@ public class MendeleySearcher {
                     }
                 }
                 //for author
-/*
                 for (Author author : document.getAuthors()) {
                     final String authorName = SearcherUtil.constructAuthorUrlValidString(author);
                     PagedList<Document> authorsDocs = new PagedArrayList<Document>();
-                    if (documentSearchCounter <= DOCUMENT_SEARCH_LIMIT) {
+                    if (documentSearchCounter <= RunMe.DOCUMENT_SEARCH_LIMIT) {
                         try {
                             sleepMe();
                             documentSearchCounter++;
@@ -126,7 +126,6 @@ public class MendeleySearcher {
                         }
                     }
                 }
-*/
                 System.out.println("ADD > Koniec dodawania dokumentow dla " + document.getTitle());
             }
         }
