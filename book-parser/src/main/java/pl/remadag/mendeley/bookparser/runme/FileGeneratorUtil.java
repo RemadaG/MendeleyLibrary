@@ -36,9 +36,10 @@ public class FileGeneratorUtil {
                     out.newLine();
                     out.write("> " + relatedDocTitle);
                 }
-                out.close();
             }
+            out.close();
             System.out.println("File " + fileName + " in location " + relatedDocsFile.getAbsolutePath() + " created successfully.");
+            sleepMe();
         } else {
             System.out.println("EXCEPTION File for related docs already exists.");
         }
@@ -68,6 +69,7 @@ public class FileGeneratorUtil {
                 }
                 out.close();
                 System.out.println("File " + fileName + " in location " + file.getAbsolutePath() + " created successfully.");
+                sleepMe();
             } else {
                 System.out.println("EXCEPTION File already exists.");
             }
@@ -106,8 +108,18 @@ public class FileGeneratorUtil {
 
             out.close();
             System.out.println("File " + fileName + " in location " + docsFile.getAbsolutePath() + " created successfully.");
+            sleepMe();
         } else {
             System.out.println("EXCEPTION File for related docs already exists.");
         }
     }
+
+    private void sleepMe() {
+        try {
+            Thread.sleep(RunMe.MILLIS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
