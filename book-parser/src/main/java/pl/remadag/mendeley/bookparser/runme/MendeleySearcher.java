@@ -21,15 +21,13 @@ public class MendeleySearcher {
     private Map<String, Set<String>> relatedDocMap = new HashMap<String, Set<String>>();
     private int documentSearchCounter = 0;
 
-    private static final int DOCUMENT_SEARCH_LIMIT = 5;
-    private static final long MILLIS = 500L;
 
     public void searchService(MendeleyServiceFactory factory, String inputSentence) {
         Map<String, List<String>> mapWithKeys = SearcherUtil.parseInputSentence(inputSentence);
         SearchService searchService = factory.createSearchService();
         List<Document> documents = new ArrayList<Document>();
         for (String addTerm : mapWithKeys.get("ADD")) {
-            if (documentSearchCounter <= DOCUMENT_SEARCH_LIMIT) {
+            if (documentSearchCounter <= RunMe.DOCUMENT_SEARCH_LIMIT) {
                 System.out.println("Wyszukiwanie ksiazek dla hasla " + addTerm.toUpperCase());
                 try {
                     sleepMe();
@@ -44,7 +42,7 @@ public class MendeleySearcher {
         }
 
         for (String removeTerm : mapWithKeys.get("REMOVE")) {
-            if (documentSearchCounter <= DOCUMENT_SEARCH_LIMIT) {
+            if (documentSearchCounter <= RunMe.DOCUMENT_SEARCH_LIMIT) {
                 try {
                     sleepMe();
                     documentSearchCounter++;
@@ -63,9 +61,8 @@ public class MendeleySearcher {
         for (Document document : documents) {
             if (document.getAuthors() != null && document.getAuthors().size() > 0 && document.getTitle() != null && document.getUuid() != null) {
                 removeDocumentFromMap(document, removeTerm);
-/*
                 PagedList<Document> relatedDocs = new PagedArrayList<Document>();
-                if (documentSearchCounter <= DOCUMENT_SEARCH_LIMIT) {
+                if (documentSearchCounter <= RunMe.DOCUMENT_SEARCH_LIMIT) {
                     try {
                         sleepMe();
                         documentSearchCounter++;
@@ -80,7 +77,7 @@ public class MendeleySearcher {
                         }
                     }
 
-                }    */
+                }
                 System.out.println("REM > Koniec dodawania dokumentow dla " + document.getTitle());
             }
         }
@@ -93,7 +90,7 @@ public class MendeleySearcher {
 
                 //related documents
                 PagedList<Document> relatedDocs = new PagedArrayList<Document>();
-                if (documentSearchCounter <= DOCUMENT_SEARCH_LIMIT) {
+                if (documentSearchCounter <= RunMe.DOCUMENT_SEARCH_LIMIT) {
                     try {
                         sleepMe();
                         documentSearchCounter++;
@@ -108,7 +105,6 @@ public class MendeleySearcher {
                         }
                     }
                 }
-
                 //for author
 /*
                 for (Author author : document.getAuthors()) {
@@ -149,9 +145,9 @@ public class MendeleySearcher {
     }
 
     private void sleepMe() {
-        System.out.println(">>>>>>>>>>>>>>>>>>Obecnie counter to: " + documentSearchCounter);
+        System.out.println(">>> Obecnie counter to: " + documentSearchCounter);
         try {
-            Thread.sleep(MILLIS);
+            Thread.sleep(RunMe.MILLIS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -192,7 +188,7 @@ public class MendeleySearcher {
     private void printLastResults() throws IOException {
         System.out.println("\n\nKONIEC\n\n");
         FileGeneratorUtil fileGenerator = new FileGeneratorUtil();
-        String filesLocationPrefix = "/imageANDrecognitionANDgrammarNOTneural/";
+        String filesLocationPrefix = FileGeneratorUtil.createFilesLocationPrefix();
         for (String term : generalMap.keySet()) {
             Map<String, DocumentCounter> documentCounterMap = generalMap.get(term.toLowerCase());
             Map<String, Set<Document>> sortedDocMap = new HashMap<String, Set<Document>>();
@@ -203,13 +199,14 @@ public class MendeleySearcher {
                 int counter = documentCounter.getCounter();
                 putDocAndCounterToMap(doc, counter, sortedDocMap);
             }
-            fileGenerator.createFilesForTherm(term, sortedDocMap, filesLocationPrefix);
+            fileGenerator.createFilesForTerm(term, sortedDocMap, filesLocationPrefix);
         }
 
         fileGenerator.createRelatedDocsFile(relatedDocMap, filesLocationPrefix);
-        fileGenerator.createDocsWithFitsAllCriteria(generalMap, filesLocationPrefix);
-    }
 
+        Map<String, Integer> fitsCriteriaDocsMap = generateMapWithAllDocumentsWhichFitsAllCriteria(generalMap);
+        fileGenerator.createDocsWithFitsAllCriteria(fitsCriteriaDocsMap, filesLocationPrefix);
+    }
 
     private void putDocAndCounterToMap(Document doc, int counter, Map<String, Set<Document>> sortedDocMap) {
         if (sortedDocMap.containsKey(String.valueOf(counter))) {
@@ -228,21 +225,52 @@ public class MendeleySearcher {
             System.out.println("\n\nZaczynam przetwarzanie dla slow: " + key);
             searchService(factory, key);
             System.out.println("Zakonczylem przetwarzanie dla slow: " + key);
-            generateMapWithAllDocumentsWhichFitsAllCriteria();
-
             try {
                 printLastResults();
             } catch (IOException e) {
-                System.out.println("[searchForKeys] EXCEPTION: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
 
-    private void generateMapWithAllDocumentsWhichFitsAllCriteria() {
+    protected Map<String, Integer> generateMapWithAllDocumentsWhichFitsAllCriteria(Map<String, Map<String, DocumentCounter>> generalMap) {
+        Map<String, Integer> allFitsDocMap = new HashMap<String, Integer>();
         Set<String> generalMapKeys = generalMap.keySet();
         System.out.println("[generateMapWithAllDocumentsWhichFitsAllCriteria] START");
-        for (String keys: generalMap.keySet()) {
-
+        Map<String, DocumentCounter> firstDocList = null;
+        for (String key : generalMapKeys) {
+            if (!key.startsWith("r_")) {
+                firstDocList = generalMap.get(key);
+                break;
+            }
+        }
+        if (firstDocList != null) {
+            for (String docTitleLowercase : firstDocList.keySet()) {
+                boolean shouldContinue = true;
+                String currentDocTitle = firstDocList.get(docTitleLowercase).getDocument().getTitle();
+                int currentDocCounter = 0;
+                for (String termKey : generalMap.keySet()) {
+                    if (!termKey.startsWith("r_") && shouldContinue) {
+                        Map<String, DocumentCounter> docList = generalMap.get(termKey);
+                        if (docList.get(docTitleLowercase) != null) {
+                            DocumentCounter docCounter = docList.get(docTitleLowercase);
+                            currentDocCounter = currentDocCounter + docCounter.getCounter();
+                        } else {
+                            shouldContinue = false;
+                            currentDocCounter = 0;
+                            break;
+                        }
+                    }
+                }
+                if (shouldContinue) {
+                    allFitsDocMap.put(currentDocTitle, currentDocCounter);
+                    System.out.println(":) -> Spełnia kryteria: " + currentDocTitle);
+                }
+            }
+            System.out.println(">>Liczba dok spelniajacych kryteria: " + allFitsDocMap.size());
+            return allFitsDocMap;
+        } else {
+            return new HashMap<String, Integer>();
         }
     }
 }

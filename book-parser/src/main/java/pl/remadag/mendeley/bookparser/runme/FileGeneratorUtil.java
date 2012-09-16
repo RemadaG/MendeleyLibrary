@@ -16,6 +16,11 @@ import java.util.Set;
  */
 public class FileGeneratorUtil {
 
+    protected static String createFilesLocationPrefix() {
+        return "files/" + RunMe.DOC_DIR + "/";
+    }
+
+
     public void createRelatedDocsFile(Map<String, Set<String>> relatedDocMap, String filesLocationPrefix) throws IOException {
         String fileName = "relatedDocs.txt";
         final String pathName = filesLocationPrefix + fileName;
@@ -29,7 +34,7 @@ public class FileGeneratorUtil {
                 out.write(docTitle);
                 for (String relatedDocTitle : relatedDocMap.get(docTitle)) {
                     out.newLine();
-                    out.write("\t" + relatedDocTitle);
+                    out.write("> " + relatedDocTitle);
                 }
                 out.close();
             }
@@ -39,7 +44,7 @@ public class FileGeneratorUtil {
         }
     }
 
-    public void createFilesForTherm(String term, Map<String, Set<Document>> sortedDocMap, String filesLocationPrefix) throws IOException {
+    public void createFilesForTerm(String term, Map<String, Set<Document>> sortedDocMap, String filesLocationPrefix) throws IOException {
         for (String counter : sortedDocMap.keySet()) {
             String fileNameTerm;
             if (!term.contains("r_")) {
@@ -78,7 +83,12 @@ public class FileGeneratorUtil {
     }
 
 
-    public void createDocsWithFitsAllCriteria(Map<String, Map<String, DocumentCounter>> generalMap, String filesLocationPrefix) throws IOException {
+    public void createDocsWithFitsAllCriteria(Map<String, Integer> fitsCriteriaDocsMap, String filesLocationPrefix) throws IOException {
+
+        if(fitsCriteriaDocsMap.isEmpty()) {
+            fitsCriteriaDocsMap.put("Test title", 5);
+        }
+
         String fileName = "correctDocs.txt";
         final String pathName = filesLocationPrefix + fileName;
         File docsFile = new File(pathName);
@@ -86,8 +96,15 @@ public class FileGeneratorUtil {
         if (exist) {
             FileWriter fstream = new FileWriter(pathName);
             BufferedWriter out = new BufferedWriter(fstream);
-            out.write("Liczba wszystkich ksiazek: " + 0);
+            out.write("Liczba wszystkich ksiazek: " + fitsCriteriaDocsMap.size());
             out.newLine();
+
+            for(String title : fitsCriteriaDocsMap.keySet()) {
+                out.write(title + " | Częstotliwość: "+ fitsCriteriaDocsMap.get(title));
+                out.newLine();
+            }
+
+            out.close();
             System.out.println("File " + fileName + " in location " + docsFile.getAbsolutePath() + " created successfully.");
         } else {
             System.out.println("EXCEPTION File for related docs already exists.");
