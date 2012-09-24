@@ -2,7 +2,6 @@
  * graph.cpp
  *
  *  Created on: Sep 07, 2012
- *      Author: Paweł Zagórski
  */
 
 #include "graph.h"

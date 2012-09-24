@@ -2,7 +2,6 @@
  * reader.h
  *
  *  Created on: Sep 07, 2012
- *      Author: Paweł Zagórski
  */
 
 #ifndef READER_H_

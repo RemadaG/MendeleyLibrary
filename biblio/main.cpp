@@ -2,8 +2,6 @@
 // Name        : main.cpp
 // Author      : 
 // Version     :
-// Copyright   : Paweł Zagórski
-// Description : Hello World in C++, Ansi-style
 //============================================================================
 
 #include <iostream>

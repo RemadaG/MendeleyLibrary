@@ -2,7 +2,6 @@
  * graph.h
  *
  *  Created on: Sep 22, 2011
- *      Author: Paweł Zagórski
  */
 
 #ifndef GRAPH_H_
