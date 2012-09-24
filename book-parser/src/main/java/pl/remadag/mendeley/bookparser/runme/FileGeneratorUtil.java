@@ -17,7 +17,7 @@ import java.util.Set;
 public class FileGeneratorUtil {
 
     protected static String createFilesLocationPrefix() {
-        return "files/" + RunMe.DOC_DIR + "/";
+        return RunMe.DOC_DIR;
     }
 
 

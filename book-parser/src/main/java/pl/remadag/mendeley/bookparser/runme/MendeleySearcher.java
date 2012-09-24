@@ -9,13 +9,7 @@ import com.mendeley.oapi.services.MendeleyServiceFactory;
 import com.mendeley.oapi.services.SearchService;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class MendeleySearcher {
 
@@ -264,7 +258,7 @@ public class MendeleySearcher {
                 }
                 if (shouldContinue) {
                     allFitsDocMap.put(currentDocTitle, currentDocCounter);
-                    System.out.println(":) -> Spełnia kryteria: " + currentDocTitle);
+//                    System.out.println(":) -> Spełnia kryteria: " + currentDocTitle);
                 }
             }
             System.out.println(">>Liczba dok spelniajacych kryteria: " + allFitsDocMap.size());
